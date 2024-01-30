@@ -9,19 +9,32 @@ import rfc3339_validator
 import datetime
 import rfc3987
 import iteration_utilities
+import packaging
+import json
 
+
+# you are here
 
 def validate_security_insights(security_insights_path, schema_path="./security-insights-schema-1.0.0.yaml"):
-    with open(schema_path, 'r') as file:
-        schema = file.read()
-    with open(security_insights_path, 'r') as file:
-        security_insights = file.read()
-    validator = jsonschema.Draft7Validator(yaml.full_load(schema), format_checker=jsonschema.draft7_format_checker)
-    errors = validator.iter_errors(yaml.full_load(security_insights))
-    errors_json = {"errors": []}
-    for error in errors:
-        errors_json['errors'].append(error.__dict__)
-    return errors_json
+    try:
+        if schema_path == "latest":
+            print("1")
+        elif schema_path[0] == "v":
+            print("1")
+        else:
+            with open(schema_path, 'r') as file:
+                schema = file.read()
+        with open(security_insights_path, 'r') as file:
+            security_insights = file.read()
+        validator = jsonschema.Draft7Validator(yaml.full_load(schema), format_checker=jsonschema.draft7_format_checker)
+        errors = validator.iter_errors(yaml.full_load(security_insights))
+        errors_json = {"errors": []}
+        for error in errors:
+            errors_json['errors'].append(error.__dict__)
+        return errors_json
+    except Exception as e:
+        exec_error = {"exec error": e}
+        return exec_error
 
 
 def beautiful_print(json_response):
@@ -86,12 +99,12 @@ def fix_norway_problem(security_insights, num, is_list, key=None):
             if type(security_insights[my_key]) is dict or type(security_insights[my_key]) is list:
                 if is_list and not counter:
                     counter += 1
-                    printable_value = ('  ' * (num-1)) + '- ' + my_key + ':'
+                    printable_value = ('  ' * (num - 1)) + '- ' + my_key + ':'
                     printable_result['result'] += printable_value + '\n'
                     print(printable_value)
                 else:
                     if is_list:
-                        printable_value = ('  ' * (num-1)) + my_key + ':'
+                        printable_value = ('  ' * (num - 1)) + my_key + ':'
                     else:
                         printable_value = ('  ' * num) + my_key + ':'
                     printable_result['result'] += printable_value + '\n'
@@ -365,7 +378,7 @@ def verify(path, schema, json_dict):
         beautiful_print(response)
     else:
         response = validate_security_insights(path, schema)
-        print(response)
+        print(json.dumps(response))
 
 
 @click.command(help='Create the SECURITY INSIGHTS yaml satisfying the schema.')
@@ -382,7 +395,7 @@ def create(path, schema):
     fix_norway_problem(security_insights_json, 0, False)
     save_yaml(printable_result['result'][:-1], path)
 
-    
+
 security_insights_cli.add_command(verify)
 security_insights_cli.add_command(create)
 
