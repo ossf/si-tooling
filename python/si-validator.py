@@ -9,45 +9,40 @@ import rfc3339_validator
 import datetime
 import rfc3987
 import iteration_utilities
-import packaging
 import json
+import requests
 
 
-# you are here
-
-def validate_security_insights(security_insights_path, schema_path="./security-insights-schema-1.0.0.yaml"):
+def validate_security_insights(security_insights_path, schema_source="latest"):
     try:
-        if schema_path == "latest":
-            print("1")
-        elif schema_path[0] == "v":
-            print("1")
-        else:
-            with open(schema_path, 'r') as file:
-                schema = file.read()
+        schema = schema_yaml_from_source(schema_source)
         with open(security_insights_path, 'r') as file:
             security_insights = file.read()
-        validator = jsonschema.Draft7Validator(yaml.full_load(schema), format_checker=jsonschema.draft7_format_checker)
+        validator = jsonschema.Draft7Validator(yaml.full_load(schema), format_checker=jsonschema.Draft7Validator.FORMAT_CHECKER)
         errors = validator.iter_errors(yaml.full_load(security_insights))
         errors_json = {"errors": []}
         for error in errors:
             errors_json['errors'].append(error.__dict__)
         return errors_json
     except Exception as e:
-        exec_error = {"exec error": e}
+        exec_error = {"exec_error": str(e)}
         return exec_error
 
 
 def beautiful_print(json_response):
-    if json_response['errors']:
-        print('Errors')
-        print('-----')
-        for item in json_response['errors']:
-            print("Message: {}".format(item['message']))
-            print("Relative schema path: {}".format(list(collections.deque(item['relative_schema_path']))))
-            print("$id: {}".format(item['schema']['$id']))
-            print('-----')
+    if "exec_error" in json_response.keys():
+        print("Execution Error: {}".format(json_response['exec_error']))
     else:
-        print('No errors found')
+        if "errors" in json_response.keys():
+            print('Errors')
+            print('-----')
+            for item in json_response['errors']:
+                print("Message: {}".format(item['message']))
+                print("Relative schema path: {}".format(list(collections.deque(item['relative_schema_path']))))
+                print("$id: {}".format(item['schema']['$id']))
+                print('-----')
+        else:
+            print('No errors found')
 
 
 def security_insights_yaml(yaml_dict):
@@ -85,6 +80,27 @@ def remove_null_values(mydict, key):
 def save_yaml(yaml_dict, path):
     with open(path, 'w') as file:
         file.write(yaml_dict)
+
+
+def get_schema_from_gh(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
+
+
+def schema_yaml_from_source(schema_source):
+    if schema_source == "latest":
+        schema = get_schema_from_gh(
+            "https://raw.githubusercontent.com/ossf/security-insights-spec/main/security-insights-schema"
+            ".yaml")
+    elif schema_source[0] == "v":
+        schema = get_schema_from_gh(
+            "https://raw.githubusercontent.com/ossf/security-insights-spec/" + schema_source[
+                                                                               1:] + "/security-insights-schema.yaml")
+    else:
+        with open(schema_source, 'r') as file:
+            schema = file.read()
+    return schema
 
 
 printable_result = {"result": ""}
@@ -370,7 +386,7 @@ def security_insights_cli():
 
 @click.command(help='Verify the SECURITY INSIGHTS yaml according to the schema.')
 @click.argument('path', nargs=1, type=click.Path(exists=True))
-@click.argument('schema', nargs=1, type=click.Path(exists=True), required=False)
+@click.argument('schema', nargs=1, type=click.STRING, required=False, default="latest")
 @click.option('--json', 'json_dict', is_flag=True, help='Optional. Print JSON result.')
 def verify(path, schema, json_dict):
     if not json_dict:
@@ -378,16 +394,16 @@ def verify(path, schema, json_dict):
         beautiful_print(response)
     else:
         response = validate_security_insights(path, schema)
-        print(json.dumps(response))
+        print(response)
+        print(json.dumps(response, cls=DequeEncoder))
 
 
 @click.command(help='Create the SECURITY INSIGHTS yaml satisfying the schema.')
 @click.argument('path', nargs=1, type=click.Path(), required=False, default="./SECURITY-INSIGHTS.yml")
 @click.argument('schema', nargs=1, type=click.Path(exists=True), required=False,
-                default="./security-insights-schema-1.0.0.yaml")
+                default="latest")
 def create(path, schema):
-    with open(schema, 'r') as file:
-        schema = file.read()
+    schema = schema_yaml_from_source(schema)
     yaml_dict = yaml.full_load(schema)
     unwind_properties(yaml_dict)
     security_insights_json = security_insights_yaml(yaml_dict)
