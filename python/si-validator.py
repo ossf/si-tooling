@@ -18,7 +18,8 @@ def validate_security_insights(security_insights_path, schema_source="latest"):
         schema = schema_yaml_from_source(schema_source)
         with open(security_insights_path, 'r') as file:
             security_insights = file.read()
-        validator = jsonschema.Draft7Validator(yaml.full_load(schema), format_checker=jsonschema.Draft7Validator.FORMAT_CHECKER)
+        validator = jsonschema.Draft7Validator(yaml.full_load(schema),
+                                               format_checker=jsonschema.Draft7Validator.FORMAT_CHECKER)
         errors = validator.iter_errors(yaml.full_load(security_insights))
         errors_json = {"errors": []}
         for error in errors:
@@ -95,8 +96,8 @@ def schema_yaml_from_source(schema_source):
             ".yaml")
     elif schema_source[0] == "v":
         schema = get_schema_from_gh(
-            "https://raw.githubusercontent.com/ossf/security-insights-spec/" + schema_source[
-                                                                               1:] + "/security-insights-schema.yaml")
+            "https://raw.githubusercontent.com/ossf/security-insights-spec/" + schema_source + "/security-insights"
+                                                                                               "-schema.yaml")
     else:
         with open(schema_source, 'r') as file:
             schema = file.read()
@@ -296,10 +297,7 @@ def properties_dialog(schema_property, required=False):
                 value = input("Value: ")
                 type_boolean = type_check(value, schema_property['type'])
             if schema_property['type'] == 'boolean':
-                if value == 'True':
-                    value = bool('True')
-                else:
-                    value = bool('')
+                value = string_to_bool(value)
             if schema_property['type'] == 'integer':
                 value = int(value)
         if 'format' in schema_property.keys():
@@ -324,7 +322,7 @@ def type_check(value, input_type):
     if input_type == 'string':
         return isinstance(value, str)
     if input_type == 'boolean':
-        if str(value) in ['True', 'False']:
+        if str(value).lower() in ['true', 'false']:
             return True
         else:
             return False
@@ -369,6 +367,13 @@ def enum_check(value, enum):
         return False
 
 
+def string_to_bool(value):
+    if value.lower() == 'true':
+        return True
+    else:
+        return False
+
+
 # not used in the proper way :(
 class NaturalOrderGroup(click.Group):
     def list_commands(self, ctx):
@@ -384,25 +389,43 @@ def security_insights_cli():
     pass
 
 
-@click.command(help='Verify the SECURITY INSIGHTS yaml according to the schema.')
+@click.command()
 @click.argument('path', nargs=1, type=click.Path(exists=True))
 @click.argument('schema', nargs=1, type=click.STRING, required=False, default="latest")
 @click.option('--json', 'json_dict', is_flag=True, help='Optional. Print JSON result.')
 def verify(path, schema, json_dict):
+    """
+    \b
+    Verify the SECURITY INSIGHTS yaml according to the schema.
+    \b
+    PATH is the local path of SECURITY-INSIGHTS.yml.
+    SCHEMA can be the version of the SECURITY-INSIGHTS schema (vX.Y.Z) or the local path. Default: latest
+    """
     if not json_dict:
         response = validate_security_insights(path, schema)
         beautiful_print(response)
     else:
         response = validate_security_insights(path, schema)
-        print(response)
-        print(json.dumps(response, cls=DequeEncoder))
+        fix_response = {"errors": {}}
+        for item in response['errors']:
+            fix_response['errors']['message'] = item['message']
+            fix_response['errors']['relative_schema_path'] = list(collections.deque(item['relative_schema_path']))
+            fix_response['errors']['$id'] = item['schema']['$id']
+        print(json.dumps(fix_response))
 
 
-@click.command(help='Create the SECURITY INSIGHTS yaml satisfying the schema.')
+@click.command()
 @click.argument('path', nargs=1, type=click.Path(), required=False, default="./SECURITY-INSIGHTS.yml")
-@click.argument('schema', nargs=1, type=click.Path(exists=True), required=False,
+@click.argument('schema', nargs=1, type=click.STRING, required=False,
                 default="latest")
 def create(path, schema):
+    """
+    \b
+    Create the SECURITY INSIGHTS yaml satisfying the schema.
+    \b
+    PATH is the local path of SECURITY-INSIGHTS.yml. Default: ./SECURITY-INSIGHTS.yml
+    SCHEMA can be the version of the SECURITY-INSIGHTS schema (vX.Y.Z) or the local path. Default: latest
+    """
     schema = schema_yaml_from_source(schema)
     yaml_dict = yaml.full_load(schema)
     unwind_properties(yaml_dict)

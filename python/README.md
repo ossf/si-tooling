@@ -10,16 +10,16 @@ A Python command-line tool to help maintainters, developers, and contributors to
 docker build -t sec-insights .
 ```
 
-If you want to validate a `SECURITY-INSIGHTS.yml`, run the following command by replacing `$/your/path:` with the path where are the `SECUIRTY-INSIGHTS.yml` of the project and `security-insights-schema.yml` which can be found [here](https://github.com/ossf/security-insights-spec/blob/main/security-insights-schema.yaml):
+If you want to validate a `SECURITY-INSIGHTS.yml`, run the following command in the folder of the project's `SECURITY-INSIGHTS.yml`:
 
 ```
-docker run -v $/your/path:/security-insights-validation -it sec-insights si-validator verify /security-insights-validation/SECURITY-INSIGHTS.yml /security-insights-validation/security-insights-schema.yaml
+docker run -v $PWD:/tmp -it sec-insights verify SECURITY-INSIGHTS.yml
 ```
 
 If you want to create a new `SECURITY-INSIGHTS.yml` by complying the YAML schema, launch this command:
 
 ```
-docker run -v $/your/path:/security-insights-validation -it sec-insights si-validator create /security-insights-validation/SECURITY-INSIGHTS.yml /security-insights-validation/security-insights-schema.yaml
+docker run -v $PWD:/tmp -it sec-insights si-validator create
 ```
 
 and fill out the questionnaire by following the wizard. The questions labeled with `(optional)` are not mandatory and can be skipped.
