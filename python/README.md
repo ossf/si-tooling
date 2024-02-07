@@ -31,7 +31,6 @@ If you find any bugs, please open an issue or submit a pull request.
 ### Known Bugs
 
 - [ ] Value type and format are not printed in the wizard
-- [ ] The script accepts just `True` or `False` for boolean values (case sensitive)
 - [ ] The script supports just single-line comments
 
 ## Security
