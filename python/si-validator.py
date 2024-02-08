@@ -91,9 +91,12 @@ def get_schema_from_gh(url):
 
 def schema_yaml_from_source(schema_source):
     if schema_source == "latest":
+        response = requests.get("https://github.com/ossf/security-insights-spec/releases/latest", allow_redirects=True)
+        redirect_url = response.url
+        tag = redirect_url.split('/')[-1]
         schema = get_schema_from_gh(
-            "https://raw.githubusercontent.com/ossf/security-insights-spec/main/security-insights-schema"
-            ".yaml")
+            "https://raw.githubusercontent.com/ossf/security-insights-spec/" + tag + "/security-insights"
+                                                                                               "-schema.yaml")
     elif schema_source[0] == "v":
         schema = get_schema_from_gh(
             "https://raw.githubusercontent.com/ossf/security-insights-spec/" + schema_source + "/security-insights"
