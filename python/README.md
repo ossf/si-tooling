@@ -19,7 +19,7 @@ docker run -v $PWD:/tmp -it sec-insights verify SECURITY-INSIGHTS.yml
 If you want to create a new `SECURITY-INSIGHTS.yml` by complying the YAML schema, launch this command:
 
 ```
-docker run -v $PWD:/tmp -it sec-insights si-validator create
+docker run -v $PWD:/tmp -it sec-insights create
 ```
 
 and fill out the questionnaire by following the wizard. The questions labeled with `(optional)` are not mandatory and can be skipped.
