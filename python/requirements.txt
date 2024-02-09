@@ -1,6 +1,7 @@
-click==8.1.3
+click==8.1.6
 iteration_utilities==0.11.0
-jsonschema==4.9.0
-PyYAML==6.0
+jsonschema==4.21.1
+PyYAML==6.0.1
+Requests==2.31.0
 rfc3339_validator==0.1.4
 rfc3987==1.3.8
