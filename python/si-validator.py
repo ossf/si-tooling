@@ -409,11 +409,12 @@ def verify(path, schema, json_dict):
         beautiful_print(response)
     else:
         response = validate_security_insights(path, schema)
-        fix_response = {"errors": {}}
+        fix_response = {"errors": []}
         for item in response['errors']:
-            fix_response['errors']['message'] = item['message']
-            fix_response['errors']['relative_schema_path'] = list(collections.deque(item['relative_schema_path']))
-            fix_response['errors']['$id'] = item['schema']['$id']
+            item_dict = {'message': item['message'],
+                         'relative_schema_path': list(collections.deque(item['relative_schema_path'])),
+                         '$id': item['schema']['$id']}
+            fix_response['errors'].append(item_dict)
         print(json.dumps(fix_response))
 
 
