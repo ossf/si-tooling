@@ -40,7 +40,10 @@ def beautiful_print(json_response):
             for item in json_response['errors']:
                 print("Message: {}".format(item['message']))
                 print("Relative schema path: {}".format(list(collections.deque(item['relative_schema_path']))))
-                print("$id: {}".format(item['schema']['$id']))
+                try:
+                    print("$id: {}".format(item['schema']['$id']))
+                except Exception as e:
+                    continue
                 print('-----')
         else:
             print('No errors found')
@@ -412,8 +415,9 @@ def verify(path, schema, json_dict):
         fix_response = {"errors": []}
         for item in response['errors']:
             item_dict = {'message': item['message'],
-                         'relative_schema_path': list(collections.deque(item['relative_schema_path'])),
-                         '$id': item['schema']['$id']}
+                         'relative_schema_path': list(collections.deque(item['relative_schema_path']))}
+            if '$id' in item['schema']:
+                item_dict['$id'] = item['schema']['$id']
             fix_response['errors'].append(item_dict)
         print(json.dumps(fix_response))
 
