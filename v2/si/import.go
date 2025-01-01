@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -49,6 +51,36 @@ func getGitHubSourceFile(endpoint string) (response FileAPIResponse, err error) 
 	return
 }
 
+func parseVersion(version string) (major int, minor int, patch int) {
+	splitVersion := strings.Split(version, ".")
+	if len(splitVersion) == 3 {
+		major, _ = strconv.Atoi(splitVersion[0])
+		minor, _ = strconv.Atoi(splitVersion[1])
+		patch, _ = strconv.Atoi(splitVersion[2])
+		return
+	}
+	if len(splitVersion) == 2 {
+		major, _ = strconv.Atoi(splitVersion[0])
+		minor, _ = strconv.Atoi(splitVersion[1])
+		return
+	}
+	if len(splitVersion) == 1 {
+		major, _ = strconv.Atoi(splitVersion[0])
+		return
+	}
+	return
+}
+
+func checkVersion(version string) error {
+	// This is a placeholder to determine behavior for different schema versions
+	// but currently only v2.0.0 is supported
+	major, minor, patch := parseVersion(version)
+	if major != 2 || minor+patch != 0 {
+		return fmt.Errorf("unsupported schema version specified by target: %s", version)
+	}
+	return nil
+}
+
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	var builder SIBuilder
 	// Get Target SI
@@ -61,6 +93,11 @@ func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	err = yaml.Unmarshal(response.ByteContent, &builder.TargetSI)
 	if err != nil {
 		err = fmt.Errorf("error unmarshalling target SI: %s", err.Error())
+		return
+	}
+
+	err = checkVersion(builder.TargetSI.Header.SchemaVersion)
+	if err != nil {
 		return
 	}
 
