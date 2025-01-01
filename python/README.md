@@ -1,5 +1,10 @@
 # Command-line Generator and Validator
 
+> [!WARNING]
+> This was designed as part of the v1 release, and does not have any feature support for v2.
+>
+> The recommended method for validating v2 is to use the Cue schema included in the release.
+
 A Python command-line tool to help maintainters, developers, and contributors to generate or validate the SECURITY INSIGHTS yaml file.
 
 ## Usage
