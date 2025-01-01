@@ -1,4 +1,4 @@
-module github.com/ossf/si-tooling
+module github.com/ossf/si-tooling/v2
 
 go 1.23
 
