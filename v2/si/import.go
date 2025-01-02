@@ -103,12 +103,13 @@ func Read(owner, repo, path string) (si SecurityInsights, err error) {
 
 	// check for parent SI, read if exists
 	if builder.TargetSI.Header.ProjectSISource != "" {
-		response, err = getGitHubSourceFile(builder.TargetSI.Header.ProjectSISource)
+		var raw []byte
+		raw, err = makeApiCall(builder.TargetSI.Header.ProjectSISource, "")
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
 		}
-		err = yaml.Unmarshal(response.ByteContent, &builder.ParentSI)
+		err = yaml.Unmarshal(raw, &builder.ParentSI)
 		if err != nil {
 			err = fmt.Errorf("error unmarshalling parent SI: %s", err.Error())
 			return
