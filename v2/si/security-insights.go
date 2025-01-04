@@ -55,7 +55,13 @@ type Project struct {
 	Administrators []Contact  `yaml:"administrators"`
 	Repositories   []Repo     `yaml:"repositories"`
 	Vulnerability  VulnReport `yaml:"vulnerability-reporting"`
-	Documentation  Docs       `yaml:"documentation"`
+	Documentation  struct {
+		DetailedGuide         string `yaml:"detailed-guide"`
+		CodeOfConduct         string `yaml:"code-of-conduct"`
+		QuickstartGuide       string `yaml:"quickstart-guide"`
+		ReleaseProcess        string `yaml:"release-process"`
+		SignatureVerification string `yaml:"signature-verification"`
+	} `yaml:"documentation"`
 }
 
 type Repo struct {
@@ -76,14 +82,6 @@ type VulnReport struct {
 	OutOfScope         []string `yaml:"out-of-scope"`
 }
 
-type Docs struct {
-	DetailedGuide         string `yaml:"detailed-guide"`
-	CodeOfConduct         string `yaml:"code-of-conduct"`
-	QuickstartGuide       string `yaml:"quickstart-guide"`
-	ReleaseProcess        string `yaml:"release-process"`
-	SignatureVerification string `yaml:"signature-verification"`
-}
-
 type Repository struct {
 	Status                        string       `yaml:"status"`
 	URL                           string       `yaml:"url"`
@@ -94,8 +92,14 @@ type Repository struct {
 	CoreTeam                      []Contact    `yaml:"core-team"`
 	License                       License      `yaml:"license"`
 	Security                      SecurityInfo `yaml:"security"`
-	Documentation                 Docs         `yaml:"documentation"`
 	Release                       Release      `yaml:"release"`
+	Documentation                 struct {
+		Contributing         string `yaml:"contributing-guide"`
+		DependencyManagement string `yaml:"dependency-management-policy"`
+		Governance           string `yaml:"governance"`
+		ReviewPolicy         string `yaml:"review-policy"`
+		SecurityPolicy       string `yaml:"security-policy"`
+	} `yaml:"documentation"`
 }
 
 type SecurityInfo struct {
