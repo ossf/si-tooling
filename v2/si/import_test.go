@@ -26,3 +26,22 @@ func TestRead(t *testing.T) {
 		})
 	}
 }
+
+func TestSchemaURL(t *testing.T) {
+	testData := []struct {
+		version string
+		want    string
+	}{
+		{"2.0.0", "https://github.com/ossf/security-insights-spec/releases/download/v2.0.0/schema.cue"},
+		{"1.0.0", "https://github.com/ossf/security-insights-spec/releases/download/v1.0.0/schema.cue"},
+	}
+
+	for _, tt := range testData {
+		t.Run(fmt.Sprintf("SchemaURL(%s)", tt.version), func(t *testing.T) {
+			got := schemaReleaseURL(tt.version)
+			if got != tt.want {
+				t.Errorf("SchemaURL() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
