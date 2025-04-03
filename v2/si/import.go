@@ -71,6 +71,26 @@ func parseVersion(version string) (major int, minor int, patch int) {
 	return
 }
 
+func getSchema(version string) (schemaContent []byte, err error) {
+	// Construct the schema URL based on the version
+	schemaURL := schemaReleaseURL(version)
+
+	response, err := http.Get(schemaURL)
+	if err != nil {
+		err = fmt.Errorf("error making http call: %s", err.Error())
+		return
+	}
+	if response.StatusCode != 200 {
+		err = fmt.Errorf("unexpected response: %s", response.Status)
+		return
+	}
+	return io.ReadAll(response.Body)
+}
+
+func schemaReleaseURL(version string) string {
+	return fmt.Sprintf("https://github.com/ossf/security-insights-spec/releases/download/v%s/schema.cue", version)
+}
+
 func checkVersion(version string) error {
 	// This is a placeholder to determine behavior for different schema versions
 	// but currently only v2.0.0 is supported
@@ -81,6 +101,7 @@ func checkVersion(version string) error {
 	return nil
 }
 
+// Read retrieves and parses a Security Insights (SI) file from a specified GitHub repository and path into a SecurityInsights struct. The returned struct is not guaranteed to be valid according to the schema.
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	var builder SIBuilder
 	// Get Target SI
