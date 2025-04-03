@@ -75,12 +75,7 @@ func getSchema(version string) (schemaContent []byte, err error) {
 	// Construct the schema URL based on the version
 	schemaURL := schemaReleaseURL(version)
 
-	request, err := http.NewRequest("GET", schemaURL, nil)
-	if err != nil {
-		return
-	}
-	client := &http.Client{}
-	response, err := client.Do(request)
+	response, err := http.Get(schemaURL)
 	if err != nil {
 		err = fmt.Errorf("error making http call: %s", err.Error())
 		return
