@@ -21,16 +21,8 @@ type SIBuilder struct {
 	ParentSI SecurityInsights
 }
 
-func makeApiCall(endpoint, token string) (bytes []byte, err error) {
-	request, err := http.NewRequest("GET", endpoint, nil)
-	if err != nil {
-		return
-	}
-	if token != "" {
-		request.Header.Set("Authorization", "Bearer "+token)
-	}
-	client := &http.Client{}
-	response, err := client.Do(request)
+func getSecurityInsightFile(endpoint string) (bytes []byte, err error) {
+	response, err := http.Get(endpoint)
 	if err != nil {
 		err = fmt.Errorf("error making http call: %s", err.Error())
 		return
@@ -42,8 +34,8 @@ func makeApiCall(endpoint, token string) (bytes []byte, err error) {
 	return io.ReadAll(response.Body)
 }
 
-func getGitHubSourceFile(endpoint string) (response FileAPIResponse, err error) {
-	responseData, err := makeApiCall("https://api.github.com/"+endpoint, "")
+func getGitHubFile(endpoint string) (response FileAPIResponse, err error) {
+	responseData, err := getSecurityInsightFile("https://api.github.com/" + endpoint)
 	if err != nil {
 		return
 	}
@@ -84,7 +76,7 @@ func checkVersion(version string) error {
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	var builder SIBuilder
 	// Get Target SI
-	response, err := getGitHubSourceFile(fmt.Sprintf("repos/%s/%s/contents/%s", owner, repo, path))
+	response, err := getGitHubFile(fmt.Sprintf("repos/%s/%s/contents/%s", owner, repo, path))
 	if err != nil {
 		err = fmt.Errorf("error reading target SI: %s", err.Error())
 		return
@@ -104,7 +96,7 @@ func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	// check for parent SI, read if exists
 	if builder.TargetSI.Header.ProjectSISource != "" {
 		var raw []byte
-		raw, err = makeApiCall(builder.TargetSI.Header.ProjectSISource, "")
+		raw, err = getSecurityInsightFile(builder.TargetSI.Header.ProjectSISource)
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
