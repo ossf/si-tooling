@@ -3,6 +3,7 @@ package si
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -144,7 +145,7 @@ func TestRead(t *testing.T) {
 		{
 			name:       "invalid YAML content",
 			wantErr:    true,
-			errMessage: "error unmarshalling target SI:",
+			errMessage: "error unmarshaling target SI:",
 			responses: map[string]struct {
 				status     string
 				statusCode int
@@ -194,7 +195,7 @@ func TestRead(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, si)
-				assert.Equal(t, "2.0.0", si.Header.SchemaVersion)
+				assert.Equal(t, "2.0.0", string(si.Header.SchemaVersion))
 				if tt.name == "successful read with parent SI" {
 					assert.Equal(t, "parent-project", si.Project.Name)
 				}
@@ -208,4 +209,45 @@ type roundTripperFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+func TestParseVersion(t *testing.T) {
+	testData := []struct {
+		version SchemaVersion
+		major   int
+		minor   int
+		patch   int
+	}{
+		{"2.0.0", 2, 0, 0},
+		{"2.1", 2, 1, 0},
+		{"2", 2, 0, 0},
+	}
+
+	for _, tt := range testData {
+		t.Run(fmt.Sprintf("ParseVersion(%s)", tt.version), func(t *testing.T) {
+			major, minor, patch := parseVersion(tt.version)
+			if major != tt.major || minor != tt.minor || patch != tt.patch {
+				t.Errorf("parseVersion() = %d.%d.%d; want %d.%d.%d", major, minor, patch, tt.major, tt.minor, tt.patch)
+			}
+		})
+	}
+}
+
+func TestCheckVersion(t *testing.T) {
+	testData := []struct {
+		version SchemaVersion
+		wantErr bool
+	}{
+		{"2.0.0", false},
+		{"2.1", true},
+		{"3.0.0", true},
+	}
+
+	for _, tt := range testData {
+		t.Run(fmt.Sprintf("CheckVersion(%s)", tt.version), func(t *testing.T) {
+			err := checkVersion(tt.version)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("checkVersion() error = %v; wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

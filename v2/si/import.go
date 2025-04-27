@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
 type FileAPIResponse struct {
@@ -43,8 +43,8 @@ func getGitHubFile(endpoint string) (response FileAPIResponse, err error) {
 	return
 }
 
-func parseVersion(version string) (major int, minor int, patch int) {
-	splitVersion := strings.Split(version, ".")
+func parseVersion(version SchemaVersion) (major int, minor int, patch int) {
+	splitVersion := strings.Split(string(version), ".")
 	if len(splitVersion) == 3 {
 		major, _ = strconv.Atoi(splitVersion[0])
 		minor, _ = strconv.Atoi(splitVersion[1])
@@ -63,7 +63,7 @@ func parseVersion(version string) (major int, minor int, patch int) {
 	return
 }
 
-func checkVersion(version string) error {
+func checkVersion(version SchemaVersion) error {
 	// This is a placeholder to determine behavior for different schema versions
 	// but currently only v2.0.0 is supported
 	major, minor, patch := parseVersion(version)
@@ -82,9 +82,9 @@ func Read(owner, repo, path string) (si SecurityInsights, err error) {
 		return
 	}
 
-	err = yaml.Unmarshal(response.ByteContent, &builder.TargetSI)
+	err = yaml.UnmarshalWithOptions(response.ByteContent, &builder.TargetSI, yaml.DisallowUnknownField())
 	if err != nil {
-		err = fmt.Errorf("error unmarshalling target SI: %s", err.Error())
+		err = fmt.Errorf("error unmarshaling target SI: %s", err.Error())
 		return
 	}
 
@@ -96,14 +96,14 @@ func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	// check for parent SI, read if exists
 	if builder.TargetSI.Header.ProjectSISource != "" {
 		var raw []byte
-		raw, err = getSecurityInsightFile(builder.TargetSI.Header.ProjectSISource)
+		raw, err = getSecurityInsightFile(string(builder.TargetSI.Header.ProjectSISource))
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
 		}
-		err = yaml.Unmarshal(raw, &builder.ParentSI)
+		err = yaml.UnmarshalWithOptions(raw, &builder.ParentSI, yaml.DisallowUnknownField())
 		if err != nil {
-			err = fmt.Errorf("error unmarshalling parent SI: %s", err.Error())
+			err = fmt.Errorf("error unmarshaling parent SI: %s", err.Error())
 			return
 		}
 	}
