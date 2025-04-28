@@ -5,7 +5,7 @@
 >
 > The recommended method for validating v2 is to use the Cue schema included in the release.
 
-A Python command-line tool to help maintainters, developers, and contributors to generate or validate the SECURITY INSIGHTS yaml file.
+A Python command-line tool to help maintainers, developers, and contributors to generate or validate the SECURITY INSIGHTS yaml file.
 
 ## Usage
 
@@ -41,6 +41,3 @@ If you find any bugs, please open an issue or submit a pull request.
 ## Security
 
 If you find a security vulnerability, please report it via [GitHub private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
-
-
-
