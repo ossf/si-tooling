@@ -2,7 +2,10 @@ package si
 
 import (
 	"fmt"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRead(t *testing.T) {
@@ -25,4 +28,54 @@ func TestRead(t *testing.T) {
 			fmt.Print(out)
 		})
 	}
+}
+
+func TestLoad(t *testing.T) {
+	type testCase struct {
+		name          string
+		contents      []byte
+		errorExpected bool
+		want          *SecurityInsights
+	}
+	testCases := []testCase{
+		{
+			name:          "invalid YAML",
+			contents:      []byte("invalid YAML"),
+			errorExpected: true,
+			want:          nil,
+		},
+		{
+			name:          "empty header",
+			contents:      []byte("header:\n"),
+			errorExpected: true,
+			want:          nil,
+		},
+		{
+			name:          "invalid schema version",
+			contents:      []byte("header:\n  schemaVersion: invalid"),
+			errorExpected: true,
+			want:          nil,
+		},
+		{
+			name:          "minimal",
+			contents:      minimalTestData(),
+			errorExpected: false,
+			want:          nil,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Load(tt.contents)
+			assert.Equal(t, tt.errorExpected, err != nil)
+		})
+	}
+}
+
+func minimalTestData() []byte {
+	data, err := os.ReadFile("test_data/minimal.yml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to read test data: %v", err))
+	}
+	return data
 }

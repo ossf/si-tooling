@@ -1,7 +1,7 @@
 package si
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,25 +9,14 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
+
+	"github.com/google/go-github/v71/github"
 )
 
-type FileAPIResponse struct {
-	ByteContent []byte `json:"content"`
-	SHA         string `json:"sha"`
-}
-
-type SIBuilder struct {
-	TargetSI SecurityInsights
-	ParentSI SecurityInsights
-}
-
-func makeApiCall(endpoint, token string) (bytes []byte, err error) {
-	request, err := http.NewRequest("GET", endpoint, nil)
+func fetchParentSecurityInsights(parentUrl string) (bytes []byte, err error) {
+	request, err := http.NewRequest("GET", parentUrl, nil)
 	if err != nil {
 		return
-	}
-	if token != "" {
-		request.Header.Set("Authorization", "Bearer "+token)
 	}
 	client := &http.Client{}
 	response, err := client.Do(request)
@@ -42,13 +31,17 @@ func makeApiCall(endpoint, token string) (bytes []byte, err error) {
 	return io.ReadAll(response.Body)
 }
 
-func getGitHubSourceFile(endpoint string) (response FileAPIResponse, err error) {
-	responseData, err := makeApiCall("https://api.github.com/"+endpoint, "")
+func getGitHubSourceFile(owner, repo, path string) ([]byte, error) {
+	client := github.NewClient(nil)
+	content, _, _, err := client.Repositories.GetContents(context.Background(), owner, repo, path, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
-	err = json.Unmarshal(responseData, &response)
-	return
+	s, err := content.GetContent()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(s), nil
 }
 
 func parseVersion(version string) (major int, minor int, patch int) {
@@ -82,42 +75,49 @@ func checkVersion(version string) error {
 }
 
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
-	var builder SIBuilder
-	// Get Target SI
-	response, err := getGitHubSourceFile(fmt.Sprintf("repos/%s/%s/contents/%s", owner, repo, path))
+	response, err := getGitHubSourceFile(owner, repo, path)
 	if err != nil {
 		err = fmt.Errorf("error reading target SI: %s", err.Error())
 		return
 	}
-
-	err = yaml.Unmarshal(response.ByteContent, &builder.TargetSI)
+	insights, err := Load(response)
 	if err != nil {
-		err = fmt.Errorf("error unmarshalling target SI: %s", err.Error())
-		return
+		return si, err
+	}
+	return *insights, nil
+}
+
+// Load loads a SecurityInsights struct from a byte slice. If the byte slice is not valid YAML, it will return an error. If the SecurityInsights data provided in contents refers to a schema version that is not supported, it will return an error. If the SecurityInsights data provided in contents is valid, it will return a pointer to the SecurityInsights struct. If the SecurityInsights data provided in contents is valid and refers to a parent SecurityInsights data source in Header.ProjectSISource, that data source will be loaded and the Project field of the returned SecurityInsights struct will be overridden with the Project field of the loaded data source.
+func Load(contents []byte) (si *SecurityInsights, err error) {
+	insights := &SecurityInsights{}
+	err = yaml.UnmarshalWithOptions(contents, insights, yaml.Strict())
+	if err != nil {
+		err = fmt.Errorf("error unmarshalling SI: %s", err.Error())
+		return nil, err
+	}
+	if (Header{}) == insights.Header {
+		err = fmt.Errorf("data provided is not a valid SecurityInsights")
+		return nil, err
 	}
 
-	err = checkVersion(builder.TargetSI.Header.SchemaVersion)
+	err = checkVersion(insights.Header.SchemaVersion)
 	if err != nil {
-		return
+		return nil, err
 	}
-
-	// check for parent SI, read if exists
-	if builder.TargetSI.Header.ProjectSISource != "" {
+	if insights.Header.ProjectSISource != "" {
 		var raw []byte
-		raw, err = makeApiCall(builder.TargetSI.Header.ProjectSISource, "")
+		raw, err = fetchParentSecurityInsights(insights.Header.ProjectSISource)
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
 		}
-		err = yaml.Unmarshal(raw, &builder.ParentSI)
+		parent := &SecurityInsights{}
+		err = yaml.Unmarshal(raw, parent)
 		if err != nil {
 			err = fmt.Errorf("error unmarshalling parent SI: %s", err.Error())
 			return
 		}
+		insights.Project = parent.Project
 	}
-
-	// Override target SI project data with contents of parent SI project data
-	builder.TargetSI.Project = builder.ParentSI.Project
-
-	return builder.TargetSI, nil
+	return insights, nil
 }

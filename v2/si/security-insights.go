@@ -57,6 +57,7 @@ type Project struct {
 	Funding        string     `yaml:"funding"`
 	Administrators []Contact  `yaml:"administrators"`
 	Repositories   []Repo     `yaml:"repositories"`
+	Steward        *Link      `yaml:"steward"`
 	Vulnerability  VulnReport `yaml:"vulnerability-reporting"`
 	Documentation  struct {
 		DetailedGuide         string `yaml:"detailed-guide"`
