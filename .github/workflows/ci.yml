@@ -20,3 +20,5 @@ jobs:
         with:
           version: v2.1
           working-directory: v2
+      - name: run tests
+        run: make covcheck

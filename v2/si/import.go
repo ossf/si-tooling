@@ -32,7 +32,7 @@ func fetchParentSecurityInsights(parentUrl string) (bytes []byte, err error) {
 }
 
 func getGitHubSourceFile(owner, repo, path string) ([]byte, error) {
-	client := github.NewClient(nil)
+	client := github.NewClient(http.DefaultClient)
 	content, _, _, err := client.Repositories.GetContents(context.Background(), owner, repo, path, nil)
 	if err != nil {
 		return nil, err
@@ -74,6 +74,9 @@ func checkVersion(version string) error {
 	return nil
 }
 
+// Read reads a SecurityInsights YAML file from a public GitHub repository
+// and returns an error if the file cannot be found or unmarshalled or returns
+// a SecurityInsights resulting from the unmarshalling.
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
 	response, err := getGitHubSourceFile(owner, repo, path)
 	if err != nil {
@@ -100,19 +103,19 @@ func Load(contents []byte) (si *SecurityInsights, err error) {
 		return nil, err
 	}
 
-	err = checkVersion(insights.Header.SchemaVersion)
+	err = checkVersion(string(insights.Header.SchemaVersion))
 	if err != nil {
 		return nil, err
 	}
 	if insights.Header.ProjectSISource != "" {
 		var raw []byte
-		raw, err = fetchParentSecurityInsights(insights.Header.ProjectSISource)
+		raw, err = fetchParentSecurityInsights(string(insights.Header.ProjectSISource))
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
 		}
 		parent := &SecurityInsights{}
-		err = yaml.Unmarshal(raw, parent)
+		err = yaml.UnmarshalWithOptions(raw, insights, yaml.Strict())
 		if err != nil {
 			err = fmt.Errorf("error unmarshalling parent SI: %s", err.Error())
 			return
