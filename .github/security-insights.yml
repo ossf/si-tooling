@@ -3,7 +3,7 @@ header:
   last-updated: '2025-04-10'
   last-reviewed: '2025-04-10'
   url: https://github.com/ossf/si-tooling
-  project-si-source: https://github.com/ossf/security-insights-spec/blob/main/.github/security-insights.yml
+  project-si-source: https://raw.githubusercontent.com/ossf/security-insights-spec/refs/heads/main/.github/security-insights.yml
 
 repository:
   status: active
