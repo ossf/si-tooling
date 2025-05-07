@@ -12,7 +12,7 @@ test-cov:
 
 covcheck: test-cov
 	@COVERAGE=$(shell cd v2 && go tool cover -func=coverage.out | grep total | grep -Eo '[0-9]+\.[0-9]+'); \
-	THRESHOLD=45.0; \
+	THRESHOLD=75.0; \
 	echo "Test coverage: $$COVERAGE%"; \
 	echo "Coverage threshold: $$THRESHOLD%"; \
 	if [ $$(echo "$$COVERAGE < $$THRESHOLD" | bc) -gt 0 ]; then \
