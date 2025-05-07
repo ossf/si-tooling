@@ -109,7 +109,7 @@ func Load(contents []byte) (si *SecurityInsights, err error) {
 	}
 	if insights.Header.ProjectSISource != "" {
 		var raw []byte
-		raw, err = fetchParentSecurityInsights(string(insights.Header.ProjectSISource))
+		raw, err = fetchParentSecurityInsights(insights.Header.ProjectSISource.String())
 		if err != nil {
 			err = fmt.Errorf("error reading parent SI: %s", err.Error())
 			return
