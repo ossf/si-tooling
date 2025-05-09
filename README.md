@@ -7,5 +7,5 @@ This project contains several tools useful for working with [Security Insights](
 
 ## Releases
 
-- [v3.0.0](https://github.com/ossf/si-tooling/releases/tag/v2.0.4) of `github.com/ossf/si-tooling/v2/` is tested against the [v2.1.0](https://github.com/ossf/security-insights-spec/releases/tag/v2.0.0) release of Security Insights.
+- [v2.1.0](https://github.com/ossf/si-tooling/releases/tag/v2.1.0) of `github.com/ossf/si-tooling/v2/` is tested against the [v2.1.0](https://github.com/ossf/security-insights-spec/releases/tag/v2.1.0) release of Security Insights.
 - [v2.0.4](https://github.com/ossf/si-tooling/releases/tag/v2.0.4) of `github.com/ossf/si-tooling/v2/` is tested against the [v2.0.0](https://github.com/ossf/security-insights-spec/releases/tag/v2.0.0) release of Security Insights.

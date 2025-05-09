@@ -40,6 +40,12 @@ func TestLoad(t *testing.T) {
 			errorExpected: false,
 			want:          nil,
 		},
+		{
+			name:          "minimal - v2.1.0",
+			contents:      minimalV210TestData(),
+			errorExpected: false,
+			want:          nil,
+		},
 	}
 
 	for _, tt := range testCases {
@@ -52,6 +58,14 @@ func TestLoad(t *testing.T) {
 
 func minimalTestData() []byte {
 	data, err := os.ReadFile("test_data/minimal.yml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to read test data: %v", err))
+	}
+	return data
+}
+
+func minimalV210TestData() []byte {
+	data, err := os.ReadFile("test_data/minimal-v2.1.0.yml")
 	if err != nil {
 		panic(fmt.Sprintf("failed to read test data: %v", err))
 	}

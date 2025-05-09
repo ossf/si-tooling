@@ -148,8 +148,8 @@ func (sv SchemaVersion) parseVersion() (major int, minor int, patch int) {
 func (sv SchemaVersion) checkVersion() error {
 	// This is a placeholder to determine behavior for different schema versions
 	// but currently only v2.0.0 is supported
-	major, minor, patch := sv.parseVersion()
-	if major != 2 || minor+patch != 0 {
+	major, _, _ := sv.parseVersion()
+	if major != 2 {
 		return fmt.Errorf("unsupported schema version specified by target: %s", sv)
 	}
 	return nil
