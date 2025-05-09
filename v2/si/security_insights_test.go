@@ -8,28 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRead(t *testing.T) {
-	testData := []struct {
-		owner string
-		repo  string
-		path  string
-	}{
-		{"ossf", "security-insights-spec", ".github/security-insights.yml"},
-	}
-
-	for _, tt := range testData {
-		t.Run(fmt.Sprintf("Read(%s, %s, %s)", tt.owner, tt.repo, tt.path), func(t *testing.T) {
-			// TODO: Add real test cases
-			out, err := Read(tt.owner, tt.repo, tt.path)
-			if err != nil {
-				t.Errorf("Read() error = %v", err)
-				return
-			}
-			fmt.Print(out)
-		})
-	}
-}
-
 func TestLoad(t *testing.T) {
 	type testCase struct {
 		name          string
@@ -78,4 +56,49 @@ func minimalTestData() []byte {
 		panic(fmt.Sprintf("failed to read test data: %v", err))
 	}
 	return data
+}
+
+func TestNewURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		expected URL
+	}{
+		{
+			name:     "valid URL",
+			url:      "https://example.com",
+			expected: URL("https://example.com"),
+		},
+		{
+			name:     "empty URL",
+			url:      "",
+			expected: URL(""),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := NewURL(test.url)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+func TestNewEmail(t *testing.T) {
+	tests := []struct {
+		name     string
+		email    string
+		expected Email
+	}{
+		{
+			name:     "valid email",
+			email:    "foo@example.com",
+			expected: Email("foo@example.com"),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := NewEmail(test.email)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
 }
