@@ -13,6 +13,7 @@ func TestSchemaVersionCheckVersion(t *testing.T) {
 		expectErr bool
 	}{
 		{"2.0.0", false},
+		{"2.1.0", false},
 		{"2.0", false},
 		{"2", false},
 		{"1.0.0", true},
