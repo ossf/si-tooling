@@ -1,3 +1,4 @@
+# Locally render the godocs site
 pkgdocs:
 	@echo "Launching pkgdocs ..."
 	@cd v2 && \
