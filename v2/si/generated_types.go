@@ -166,7 +166,9 @@ type VulnerabilityReporting struct {
 
 	// Path to a page containing rules for security-related disclosures.
 	Policy *URL `json:"policy,omitempty"`
-	SecurityPolicy *URL `json:"policy,omitempty"` // Changed to `Policy` in Security Insights v2.2
+
+	// Deprecated: use Policy instead. Kept for unmarshaling YAML that still uses security-policy (pre-v2.2).
+	SecurityPolicy *URL `json:"security-policy,omitempty"`
 
 	// The PGP public key for secure communication.
 	PGPKey *URL `json:"pgp-key,omitempty"`

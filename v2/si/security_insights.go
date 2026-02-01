@@ -79,6 +79,7 @@ func Load(contents []byte) (si *SecurityInsights, err error) {
 	if err != nil {
 		return nil, err
 	}
+	mergeVulnerabilityReportingPolicy(insights)
 	if insights.Header.ProjectSISource != nil {
 		var raw []byte
 		raw, err = fetchParentSecurityInsights(insights.Header.ProjectSISource.String())
@@ -92,9 +93,21 @@ func Load(contents []byte) (si *SecurityInsights, err error) {
 			err = fmt.Errorf("error unmarshalling parent SI: %s", err.Error())
 			return
 		}
+		mergeVulnerabilityReportingPolicy(parent)
 		insights.Project = parent.Project
 	}
 	return insights, nil
+}
+
+// mergeVulnerabilityReportingPolicy copies SecurityPolicy into Policy when Policy is nil so callers can rely on Policy for both v2.2 (policy) and older (security-policy) YAML.
+func mergeVulnerabilityReportingPolicy(si *SecurityInsights) {
+	if si == nil || si.Project == nil {
+		return
+	}
+	vr := &si.Project.VulnerabilityReporting
+	if vr.Policy == nil && vr.SecurityPolicy != nil {
+		vr.Policy = vr.SecurityPolicy
+	}
 }
 
 func (u URL) String() string {
