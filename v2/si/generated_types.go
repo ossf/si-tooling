@@ -125,6 +125,9 @@ type Header struct {
 
 // ProjectDocumentation contains links to various documents related to the project, including detailed guides, code of conduct, quickstart guides, release processes, support policies, and signature verification.
 type ProjectDocumentation struct {
+	// URL to design documentation for this project.
+	Design *URL `json:"design,omitempty"`
+
 	// URL to more extensive or advanced documentation.
 	DetailedGuide *URL `json:"detailed-guide,omitempty"`
 
@@ -161,7 +164,10 @@ type VulnerabilityReporting struct {
 	// Additional comments or instructions about vulnerability reporting.
 	Comment *string `json:"comment,omitempty"`
 
-	// Path to a page containing guidelines for security-related disclosures.
+	// Path to a page containing rules for security-related disclosures.
+	Policy *URL `json:"policy,omitempty"`
+
+	// Deprecated: use Policy instead. Kept for unmarshaling YAML that still uses security-policy (pre-v2.2).
 	SecurityPolicy *URL `json:"security-policy,omitempty"`
 
 	// The PGP public key for secure communication.

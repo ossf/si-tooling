@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoad(t *testing.T) {
@@ -46,6 +47,12 @@ func TestLoad(t *testing.T) {
 			errorExpected: false,
 			want:          nil,
 		},
+		{
+			name:          "minimal - v2.2.0",
+			contents:      minimalV220TestData(),
+			errorExpected: false,
+			want:          nil,
+		},
 	}
 
 	for _, tt := range testCases {
@@ -70,6 +77,27 @@ func minimalV210TestData() []byte {
 		panic(fmt.Sprintf("failed to read test data: %v", err))
 	}
 	return data
+}
+
+func minimalV220TestData() []byte {
+	data, err := os.ReadFile("test_data/minimal-v2.2.0.yml")
+	if err != nil {
+		panic(fmt.Sprintf("failed to read test data: %v", err))
+	}
+	return data
+}
+
+func TestLoadV220Fields(t *testing.T) {
+	si, err := Load(minimalV220TestData())
+	assert.NoError(t, err)
+	require.NotNil(t, si)
+	require.NotNil(t, si.Project)
+	require.NotNil(t, si.Project.Documentation)
+	assert.NotNil(t, si.Project.Documentation.Design, "project.documentation.design should be set")
+	assert.Equal(t, "https://example.com/design", si.Project.Documentation.Design.String())
+	require.NotNil(t, &si.Project.VulnerabilityReporting)
+	assert.NotNil(t, si.Project.VulnerabilityReporting.Policy, "vulnerability-reporting.policy should be set")
+	assert.Equal(t, "https://example.com/SECURITY.md", si.Project.VulnerabilityReporting.Policy.String())
 }
 
 func TestNewURL(t *testing.T) {

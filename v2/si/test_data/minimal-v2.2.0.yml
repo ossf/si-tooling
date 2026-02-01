@@ -1,0 +1,51 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2025-03-01'
+  last-reviewed: '2025-03-01'
+  url: https://example.com/kubernetes/kubernetes
+  comment: |
+    Minimal v2.2.0 example with project.documentation.design and vulnerability-reporting.policy
+
+project:
+  name: FooBar
+  administrators:
+    - name: Joe Dohn
+      affiliation: Foo
+      email: joe.bob@example.com
+      social: https://social.example.com/joebob
+      primary: true
+  repositories:
+    - name: Foo
+      url: https://vcs.example.com/foobar/foo
+      comment: |
+        Foo is the core repo for FooBar.
+  steward:
+    uri: https://openssf.org
+    comment: |
+      The Security Insights Specification is a copyright of the Open Source Security Foundation (OpenSSF).
+  documentation:
+    design: https://example.com/design
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: true
+    policy: https://example.com/SECURITY.md
+
+repository:
+  url: https://vcs.example.com/foobar/foo
+  status: active
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  core-team:
+    - name:        Alice White
+      affiliation: Foo Bar
+      email:       alicewhite@email.com
+      social:      https://social.example.com/alicewhite
+      primary:     true
+  license:
+    url: https://example.com/LICENSE
+    expression: MIT
+  security:
+    assessments:
+      self:
+        comment: |
+          Self assessment has not yet been completed.
