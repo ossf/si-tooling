@@ -11,12 +11,14 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-go@v5.4.0
+      - uses: actions/checkout@v6.0.2
         with:
-          go-version: stable
+          persist-credentials: false
+      - uses: actions/setup-go@v6.2.0
+        with:
+          go-version-file: v2/go.mod
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v8.0.0
+        uses: golangci/golangci-lint-action@fce8c989772fe5b89e9c70c94aac89041cfb3aa9
         with:
           version: v2.1
           working-directory: v2
