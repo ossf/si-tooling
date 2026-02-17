@@ -1,7 +1,7 @@
 header:
-  schema-version: 2.0.0
-  last-updated: '2025-04-10'
-  last-reviewed: '2025-04-10'
+  schema-version: 2.2.0
+  last-updated: "2026-02-16"
+  last-reviewed: "2026-02-16"
   url: https://github.com/ossf/si-tooling
   project-si-source: https://raw.githubusercontent.com/ossf/security-insights-spec/refs/heads/main/.github/security-insights.yml
 
@@ -11,9 +11,9 @@ repository:
   accepts-change-request: true
   accepts-automated-change-request: false
   core-team:
-    - name:        Eddie Knight
+    - name: Eddie Knight
       affiliation: Sonatype
-      primary:     true
+      primary: true
   license:
     url: https://github.com/ossf/si-tooling?tab=Apache-2.0-1-ov-file#readme
     expression: Apache-2.0
@@ -24,5 +24,5 @@ repository:
   release:
     automated-pipeline: false
     distribution-points:
-      - uri:  https://github.com/ossf/si-tooling/releases
+      - uri: https://github.com/ossf/si-tooling/releases
         comment: GitHub Release Page

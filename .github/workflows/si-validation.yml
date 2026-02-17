@@ -1,0 +1,22 @@
+---
+name: Validate Security Insights
+
+on:
+  pull_request:
+    paths:
+      - ".github/security-insights.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - name: Validate Security Insights
+        uses: revanite-io/security-insights-action@v1.0.0
+        with:
+          file: .github/security-insights.yml
