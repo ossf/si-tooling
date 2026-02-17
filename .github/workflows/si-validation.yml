@@ -1,0 +1,31 @@
+---
+name: Validate Security Insights
+
+on:
+  pull_request:
+    paths:
+      - ".github/security-insights.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+      - uses: cue-lang/setup-cue@v1.0.1
+      - name: Extract schema version
+        id: version
+        run: |
+          VERSION=$(yq '.header.schema-version' .github/security-insights.yml)
+          echo "schema-version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Download schema
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/ossf/security-insights/v${{ steps.version.outputs.schema-version }}/spec/schema.cue" \
+            -o schema.cue
+      - name: Validate
+        run: cue vet schema.cue .github/security-insights.yml
