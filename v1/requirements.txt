@@ -1,4 +1,4 @@
-click==8.3.2
+click==8.3.3
 iteration_utilities==0.13.0
 jsonschema==4.26.0
 PyYAML==6.0.3
