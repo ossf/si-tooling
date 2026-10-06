@@ -6,7 +6,7 @@
 
 - `si.Discover` finds a repository's Security Insights file among the known filename and location variants (`si.DiscoveryPaths`) using two GitHub API calls
 - `si.Fetch` returns the raw bytes of a file in a public GitHub repository; `si.ErrNotFound` identifies a missing file
-- `si fetch` command (`v2/cmd/si`) runs discovery and parsing over many targets and prints machine-readable JSON, for catalogues and dashboards built on Security Insights data
+- `si fetch` command (`v2/cmd/si`) runs discovery and parsing over many targets and prints machine-readable JSON, for catalogues and dashboards built on Security Insights data. Each result carries a status of `ok`, `not-found`, `invalid` or `error`; the command exits 2 when any target hit a transport `error`, so an incomplete batch is never mistaken for a clean one
 - GitHub API calls authenticate with `GITHUB_TOKEN` when set and honour `GITHUB_API_URL`
 
 ## v2.1.0

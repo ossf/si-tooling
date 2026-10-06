@@ -57,7 +57,24 @@ Each result looks like:
 }
 ```
 
-`status` is `ok`, `not-found` (no file at the path, or discovery found nothing) or `invalid` (the file exists but does not parse as Security Insights v2; `error` says why and `schema-version` is still reported when the header declares one). The exit code is 0 whenever every target was processed; only a usage error exits non-zero. Progress is written to stderr.
+`status` is one of:
+
+| status | meaning |
+|---|---|
+| `ok` | the file was fetched and parsed; `insights` is populated |
+| `not-found` | no file at the path, or discovery found nothing |
+| `invalid` | the file exists but does not parse as Security Insights v2 (`error` says why; `schema-version` is still reported when the header declares one), or the target string is malformed |
+| `error` | the file could not be fetched at all (rate limit, server error, network, bad token); nothing is known about it |
+
+The full array is always printed. Exit codes:
+
+| exit | when |
+|---|---|
+| 0 | every target was processed; statuses are `ok`, `not-found` or `invalid` |
+| 1 | the JSON could not be written |
+| 2 | usage error, or at least one target has status `error`, so the output is incomplete and should not be committed as a snapshot |
+
+Progress is written to stderr.
 
 ## Schema version support
 

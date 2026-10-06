@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	statusOK       = "ok"
-	statusNotFound = "not-found"
-	statusInvalid  = "invalid"
+	statusOK       = "ok"        // file fetched and parsed
+	statusNotFound = "not-found" // no file at the path, or discovery found nothing
+	statusInvalid  = "invalid"   // file fetched but si.Load rejected it, or the target string is malformed
+	statusError    = "error"     // transport failure (rate limit, 5xx, network, bad token): the file's state is unknown
 )
 
 // result is one element of the JSON array `si fetch` prints.
@@ -93,12 +94,15 @@ func fetch(target string) result {
 	return r
 }
 
+// fail records a Discover/Fetch failure. Only a 404 says anything about the
+// file; every other failure is the transport's, and must not be mistaken for a
+// bad or missing file by consumers that act on not-found/invalid.
 func fail(r result, err error) result {
 	r.Error = err.Error()
 	if errors.Is(err, si.ErrNotFound) {
 		r.Status = statusNotFound
 	} else {
-		r.Status = statusInvalid
+		r.Status = statusError
 	}
 	return r
 }

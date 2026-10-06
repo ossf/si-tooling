@@ -53,7 +53,31 @@ func TestSchemaVersion(t *testing.T) {
 
 func TestFail(t *testing.T) {
 	assert.Equal(t, statusNotFound, fail(result{}, si.ErrNotFound).Status)
-	assert.Equal(t, statusInvalid, fail(result{}, errors.New("boom")).Status)
+	assert.Equal(t, statusError, fail(result{}, errors.New("boom")).Status)
+}
+
+func TestFetchTransportError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-RateLimit-Remaining", "0")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"message":"API rate limit exceeded"}`))
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("GITHUB_API_URL", srv.URL)
+
+	for _, target := range []string{"o/r", "o/r/security-insights.yml"} {
+		r := fetch(target)
+		assert.Equal(t, statusError, r.Status, target)
+		assert.Contains(t, r.Error, "rate limit", target)
+		assert.Nil(t, r.Insights)
+	}
+
+	srv500 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	t.Cleanup(srv500.Close)
+	t.Setenv("GITHUB_API_URL", srv500.URL)
+	assert.Equal(t, statusError, fetch("o/r").Status)
 }
 
 func TestFetchBadTarget(t *testing.T) {
