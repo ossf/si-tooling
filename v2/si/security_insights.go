@@ -1,7 +1,6 @@
 package si
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
-	"github.com/google/go-github/v71/github"
 )
 
 // SecurityInsightsFilename is the expected name of the YAML file containing the insights data. See https://github.com/ossf/security-insights-spec?tab=readme-ov-file#usage for more details.
@@ -33,24 +31,11 @@ func fetchParentSecurityInsights(parentUrl string) (bytes []byte, err error) {
 	return io.ReadAll(response.Body)
 }
 
-func getGitHubSourceFile(owner, repo, path string) ([]byte, error) {
-	client := github.NewClient(http.DefaultClient)
-	content, _, _, err := client.Repositories.GetContents(context.Background(), owner, repo, path, nil)
-	if err != nil {
-		return nil, err
-	}
-	s, err := content.GetContent()
-	if err != nil {
-		return nil, err
-	}
-	return []byte(s), nil
-}
-
 // Read reads a SecurityInsights YAML file from a public GitHub repository
 // and returns an error if the file cannot be found or unmarshalled or returns
 // a SecurityInsights resulting from the unmarshalling.
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
-	response, err := getGitHubSourceFile(owner, repo, path)
+	response, err := Fetch(owner, repo, path)
 	if err != nil {
 		err = fmt.Errorf("error reading target SI: %s", err.Error())
 		return
