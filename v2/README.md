@@ -19,6 +19,46 @@ func main() {
 }
 ```
 
+### Discovering the file
+
+Repositories keep the file under a handful of names and locations. `si.Discover` lists the root and `.github/` directories (two API calls) and returns the first match from `si.DiscoveryPaths`; `si.Fetch` returns the raw bytes of a known path.
+
+```go
+path, err := si.Discover("ossf", "scorecard")   // ".github/security-insights.yml"
+raw, err := si.Fetch("ossf", "scorecard", path)
+insights, err := si.Load(raw)
+```
+
+Set `GITHUB_TOKEN` to authenticate GitHub API calls (unauthenticated requests are limited to 60 per hour). `GITHUB_API_URL`, which GitHub Actions exports, is honoured for GitHub Enterprise.
+
+## Command line
+
+`si fetch` runs discovery and parsing over any number of targets and prints a JSON array, in input order, for other tools to consume:
+
+```sh
+cd v2
+go run ./cmd/si fetch ossf/scorecard mindersec/minder \
+  https://github.com/openbao/openbao/blob/main/.github/security-insights.yml
+```
+
+Targets may be `owner/repo` (discover the path), `owner/repo/<path>`, a `github.com/.../blob/...` URL, or a `raw.githubusercontent.com` URL. URLs are read from the default branch; the ref in the URL is ignored.
+
+Each result looks like:
+
+```json
+{
+  "target": "ossf/scorecard",
+  "owner": "ossf",
+  "repo": "scorecard",
+  "path": ".github/security-insights.yml",
+  "status": "ok",
+  "schema-version": "2.0.0",
+  "insights": { "header": { ... }, "project": { ... }, "repository": { ... } }
+}
+```
+
+`status` is `ok`, `not-found` (no file at the path, or discovery found nothing) or `invalid` (the file exists but does not parse as Security Insights v2; `error` says why and `schema-version` is still reported when the header declares one). The exit code is 0 whenever every target was processed; only a usage error exits non-zero. Progress is written to stderr.
+
 ## Schema version support
 
 The module supports Security Insights schema version 2.x, including v2.2.0:
