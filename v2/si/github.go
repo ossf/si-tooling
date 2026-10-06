@@ -13,19 +13,13 @@ import (
 	"github.com/google/go-github/v71/github"
 )
 
-// DiscoveryPaths lists, in priority order, the locations a repository may keep
-// its Security Insights file. The spec names security-insights.yml at the root
-// or under .github/; the other spellings are legacy variants seen in the wild.
-var DiscoveryPaths = []string{
-	"security-insights.yml",
-	"SECURITY-INSIGHTS.yml",
-	"SECURITY_INSIGHTS.yml",
-	"security_insights.yml",
-	".github/security-insights.yml",
-	".github/SECURITY-INSIGHTS.yml",
-	".github/SECURITY_INSIGHTS.yml",
-	".github/security_insights.yml",
-}
+// discoveryDirs and discoveryNames are the locations a repository may keep its
+// Security Insights file, in priority order. The spec names security-insights.yml
+// at the root or under .github/; the other spellings are legacy variants seen in the wild.
+var (
+	discoveryDirs  = []string{"", ".github"}
+	discoveryNames = []string{SecurityInsightsFilename, "SECURITY-INSIGHTS.yml", "SECURITY_INSIGHTS.yml", "security_insights.yml"}
+)
 
 // ErrNotFound is returned by Discover and Fetch when no Security Insights file exists at the requested location.
 var ErrNotFound = errors.New("security insights file not found")
@@ -71,28 +65,19 @@ func Fetch(owner, repo, filePath string) ([]byte, error) {
 	return []byte(s), nil
 }
 
-// Discover returns the path of the repository's Security Insights file, trying
-// each entry of DiscoveryPaths in order. It lists the root and .github
-// directories once each (two API calls) rather than probing every path. It
-// returns ErrNotFound when none of the candidate paths exist.
+// Discover returns the path of the repository's Security Insights file. It
+// lists the root and .github directories (at most two API calls) rather than
+// probing every candidate path, and returns ErrNotFound when none exist.
 func Discover(owner, repo string) (string, error) {
-	listed := map[string]map[string]bool{}
-	for _, candidate := range DiscoveryPaths {
-		dir := path.Dir(candidate)
-		if dir == "." {
-			dir = ""
+	for _, dir := range discoveryDirs {
+		names, err := listDir(owner, repo, dir)
+		if err != nil {
+			return "", err
 		}
-		names, seen := listed[dir]
-		if !seen {
-			var err error
-			names, err = listDir(owner, repo, dir)
-			if err != nil {
-				return "", err
+		for _, name := range discoveryNames {
+			if names[name] {
+				return path.Join(dir, name), nil
 			}
-			listed[dir] = names
-		}
-		if names[path.Base(candidate)] {
-			return candidate, nil
 		}
 	}
 	return "", fmt.Errorf("%w: %s/%s", ErrNotFound, owner, repo)

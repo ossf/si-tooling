@@ -21,7 +21,7 @@ func main() {
 
 ### Discovering the file
 
-Repositories keep the file under a handful of names and locations. `si.Discover` lists the root and `.github/` directories (two API calls) and returns the first match from `si.DiscoveryPaths`; `si.Fetch` returns the raw bytes of a known path.
+Repositories keep the file under a handful of names and locations. `si.Discover` lists the root and `.github/` directories (at most two API calls) and returns the first known filename it finds; `si.Fetch` returns the raw bytes of a known path.
 
 ```go
 path, err := si.Discover("ossf", "scorecard")   // ".github/security-insights.yml"

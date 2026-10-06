@@ -87,8 +87,8 @@ func TestFetchBadTarget(t *testing.T) {
 	assert.Nil(t, r.Insights)
 }
 
-// fakeGitHub serves one repository, o/r, over the contents API: a root listing
-// plus the given files.
+// fakeGitHub serves the files of one repository, o/r, over the contents API.
+// Discovery itself is tested in package si; here the root listing is empty.
 func fakeGitHub(t *testing.T, files map[string]string) {
 	t.Helper()
 	mux := http.NewServeMux()
@@ -102,13 +102,7 @@ func fakeGitHub(t *testing.T, files map[string]string) {
 			return
 		}
 		if p == "" {
-			var entries []map[string]string
-			for name := range files {
-				if !strings.Contains(name, "/") {
-					entries = append(entries, map[string]string{"type": "file", "name": name})
-				}
-			}
-			_ = json.NewEncoder(w).Encode(entries)
+			_, _ = w.Write([]byte(`[]`))
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -127,15 +121,11 @@ func TestFetch(t *testing.T) {
 		"v1.yml":                "header:\n  schema-version: 1.0.0\n  commit-hash: abc\n",
 	})
 
-	discovered := fetch("o/r")
-	assert.Equal(t, statusOK, discovered.Status)
-	assert.Equal(t, "SECURITY-INSIGHTS.yml", discovered.Path)
-	assert.Equal(t, "2.2.0", discovered.SchemaVersion)
-	require.NotNil(t, discovered.Insights)
-
 	exact := fetch("https://github.com/o/r/blob/main/SECURITY-INSIGHTS.yml")
 	assert.Equal(t, statusOK, exact.Status)
 	assert.Equal(t, "o", exact.Owner)
+	assert.Equal(t, "2.2.0", exact.SchemaVersion)
+	require.NotNil(t, exact.Insights)
 
 	invalid := fetch("o/r/v1.yml")
 	assert.Equal(t, statusInvalid, invalid.Status)
@@ -146,7 +136,8 @@ func TestFetch(t *testing.T) {
 	assert.Equal(t, statusNotFound, missing.Status)
 	assert.Equal(t, "nope.yml", missing.Path)
 
-	undiscoverable := fetch("o/other")
+	// Empty path runs discovery; the fake's root listing is empty.
+	undiscoverable := fetch("o/r")
 	assert.Equal(t, statusNotFound, undiscoverable.Status)
 	assert.Equal(t, "", undiscoverable.Path)
 }
