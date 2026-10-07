@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Features
+
+- `SecurityInsightsFilenames()` returns both accepted names, `security-insights.yml` and `security-insights.yaml`, matching the spec
+
+### Deprecations
+
+- `SecurityInsightsFilename` names only the `.yml` file. Use `SecurityInsightsFilenames()` instead
+
 ## v2.1.0
 
 This release is made in concert with the v2.1.0 release of [Security Insights](https://github.com/ossf/security-insights-spec)
