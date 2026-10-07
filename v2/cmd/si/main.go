@@ -6,8 +6,11 @@
 //
 //	owner/repo                                             discover the file's location
 //	owner/repo/path/to/security-insights.yml               exact path
-//	https://github.com/owner/repo/blob/<ref>/<path>        exact path (default branch is read; <ref> is ignored)
+//	https://github.com/owner/repo/blob/<ref>/<path>        exact path
 //	https://raw.githubusercontent.com/owner/repo/<ref>/<path>
+//
+// URLs are read from the default branch: <ref> is ignored and must be a single
+// path segment (a ref containing "/" shifts the path).
 //
 // Results are written to stdout as a JSON array in input order; diagnostics go
 // to stderr. A file that is missing or does not parse is reported in-band in
@@ -16,12 +19,14 @@
 //	0  every target was processed (statuses ok, not-found or invalid)
 //	1  the JSON could not be written
 //	2  usage error, or at least one target has status "error" (a transport
-//	   failure, so the snapshot is incomplete and should not be trusted)
+//	   failure, including an unreachable parent file, so the snapshot is
+//	   incomplete and should not be trusted)
 //
 // Set GITHUB_TOKEN to raise the GitHub API rate limit.
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -32,10 +37,11 @@ func main() {
 		fmt.Fprintln(os.Stderr, "usage: si fetch <target>...\n\ntarget: owner/repo | owner/repo/<path> | GitHub blob URL | raw.githubusercontent.com URL")
 		os.Exit(2)
 	}
+	ctx := context.Background()
 	results := make([]result, 0, len(os.Args)-2)
 	degraded := false
 	for _, target := range os.Args[2:] {
-		r := fetch(target)
+		r := fetch(ctx, target)
 		fmt.Fprintf(os.Stderr, "%-9s %s\n", r.Status, target)
 		degraded = degraded || r.Status == statusError
 		results = append(results, r)

@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.1.1
+## v2.3.0
 
 This release expands on the Security Insights v2.1.0 specification by adding a new micro-CLI for non-library use cases. It also contains discovery and fetching improvements to the library.
 
@@ -9,7 +9,8 @@ This release expands on the Security Insights v2.1.0 specification by adding a n
 - `si.Discover` finds a repository's Security Insights file among the known filename and location variants using at most two GitHub API calls
 - `si.Fetch` returns the raw bytes of a file in a public GitHub repository; `si.ErrNotFound` identifies a missing file
 - `si fetch` command (`v2/cmd/si`) runs discovery and parsing over many targets and prints machine-readable JSON, for catalogues and dashboards built on Security Insights data. Each result carries a status of `ok`, `not-found`, `invalid` or `error`; the command exits 2 when any target hit a transport `error`, so an incomplete batch is never mistaken for a clean one
-- GitHub API calls authenticate with `GITHUB_TOKEN` when set and honour `GITHUB_API_URL`
+- `si.Load` returns `si.ErrParentUnavailable` when the parent named in `project-si-source` cannot be fetched for a reason unrelated to its content; `si fetch` reports that as `error`, not `invalid`
+- All GitHub API calls, including the existing `si.Read`, now authenticate with `GITHUB_TOKEN` when set and honour `GITHUB_API_URL`; all requests time out after 30 seconds
 
 ## v2.1.0
 

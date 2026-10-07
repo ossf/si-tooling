@@ -1,16 +1,14 @@
 package main
 
 import (
-	"encoding/base64"
-	"encoding/json"
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path"
-	"strings"
 	"testing"
 
+	"github.com/ossf/si-tooling/v2/internal/ghtest"
 	"github.com/ossf/si-tooling/v2/si"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -57,6 +55,7 @@ func TestFail(t *testing.T) {
 }
 
 func TestFetchTransportError(t *testing.T) {
+	ctx := context.Background()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("X-RateLimit-Remaining", "0")
 		w.WriteHeader(http.StatusForbidden)
@@ -66,7 +65,7 @@ func TestFetchTransportError(t *testing.T) {
 	t.Setenv("GITHUB_API_URL", srv.URL)
 
 	for _, target := range []string{"o/r", "o/r/security-insights.yml"} {
-		r := fetch(target)
+		r := fetch(ctx, target)
 		assert.Equal(t, statusError, r.Status, target)
 		assert.Contains(t, r.Error, "rate limit", target)
 		assert.Nil(t, r.Insights)
@@ -77,67 +76,58 @@ func TestFetchTransportError(t *testing.T) {
 	}))
 	t.Cleanup(srv500.Close)
 	t.Setenv("GITHUB_API_URL", srv500.URL)
-	assert.Equal(t, statusError, fetch("o/r").Status)
+	assert.Equal(t, statusError, fetch(ctx, "o/r").Status)
+}
+
+func TestFetchParentUnavailable(t *testing.T) {
+	parent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	t.Cleanup(parent.Close)
+	ghtest.Serve(t, map[string]string{
+		"security-insights.yml": "header:\n  schema-version: 2.0.0\n  project-si-source: " + parent.URL + "\n",
+	}, nil)
+
+	r := fetch(context.Background(), "o/r/security-insights.yml")
+	assert.Equal(t, statusError, r.Status, "an unreachable parent says nothing about the file")
+	assert.Equal(t, "2.0.0", r.SchemaVersion)
+	assert.Nil(t, r.Insights)
 }
 
 func TestFetchBadTarget(t *testing.T) {
-	r := fetch("nonsense")
+	r := fetch(context.Background(), "nonsense")
 	assert.Equal(t, statusInvalid, r.Status)
 	assert.Equal(t, "nonsense", r.Target)
 	assert.Nil(t, r.Insights)
 }
 
-// fakeGitHub serves the files of one repository, o/r, over the contents API.
-// Discovery itself is tested in package si; here the root listing is empty.
-func fakeGitHub(t *testing.T, files map[string]string) {
-	t.Helper()
-	mux := http.NewServeMux()
-	mux.HandleFunc("/repos/o/r/contents/", func(w http.ResponseWriter, r *http.Request) {
-		p := strings.TrimPrefix(r.URL.Path, "/repos/o/r/contents/")
-		if body, ok := files[p]; ok {
-			_ = json.NewEncoder(w).Encode(map[string]string{
-				"type": "file", "name": path.Base(p), "encoding": "base64",
-				"content": base64.StdEncoding.EncodeToString([]byte(body)),
-			})
-			return
-		}
-		if p == "" {
-			_, _ = w.Write([]byte(`[]`))
-			return
-		}
-		w.WriteHeader(http.StatusNotFound)
-		_, _ = w.Write([]byte(`{"message":"Not Found"}`))
-	})
-	srv := httptest.NewServer(mux)
-	t.Cleanup(srv.Close)
-	t.Setenv("GITHUB_API_URL", srv.URL)
-}
-
+// Discovery itself is tested in package si; here the fake has no root listing,
+// so an owner/repo target is not-found.
 func TestFetch(t *testing.T) {
+	ctx := context.Background()
 	minimal, err := os.ReadFile("../../si/test_data/minimal-v2.2.0.yml")
 	require.NoError(t, err)
-	fakeGitHub(t, map[string]string{
+	ghtest.Serve(t, map[string]string{
 		"SECURITY-INSIGHTS.yml": string(minimal),
 		"v1.yml":                "header:\n  schema-version: 1.0.0\n  commit-hash: abc\n",
-	})
+	}, nil)
 
-	exact := fetch("https://github.com/o/r/blob/main/SECURITY-INSIGHTS.yml")
+	exact := fetch(ctx, "https://github.com/o/r/blob/main/SECURITY-INSIGHTS.yml")
 	assert.Equal(t, statusOK, exact.Status)
 	assert.Equal(t, "o", exact.Owner)
 	assert.Equal(t, "2.2.0", exact.SchemaVersion)
 	require.NotNil(t, exact.Insights)
 
-	invalid := fetch("o/r/v1.yml")
+	invalid := fetch(ctx, "o/r/v1.yml")
 	assert.Equal(t, statusInvalid, invalid.Status)
 	assert.Equal(t, "1.0.0", invalid.SchemaVersion)
 	assert.Nil(t, invalid.Insights)
 
-	missing := fetch("o/r/nope.yml")
+	missing := fetch(ctx, "o/r/nope.yml")
 	assert.Equal(t, statusNotFound, missing.Status)
 	assert.Equal(t, "nope.yml", missing.Path)
 
-	// Empty path runs discovery; the fake's root listing is empty.
-	undiscoverable := fetch("o/r")
+	undiscoverable := fetch(ctx, "o/r")
 	assert.Equal(t, statusNotFound, undiscoverable.Status)
 	assert.Equal(t, "", undiscoverable.Path)
 }

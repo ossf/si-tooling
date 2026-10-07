@@ -2,6 +2,8 @@ package si
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -143,4 +145,21 @@ func TestNewEmail(t *testing.T) {
 			assert.Equal(t, test.expected, actual)
 		})
 	}
+}
+
+func TestLoadParentUnavailable(t *testing.T) {
+	status := http.StatusBadGateway
+	parent := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(status)
+	}))
+	t.Cleanup(parent.Close)
+	contents := []byte("header:\n  schema-version: 2.0.0\n  project-si-source: " + parent.URL + "\n")
+
+	_, err := Load(contents)
+	assert.ErrorIs(t, err, ErrParentUnavailable, "a 5xx says nothing about either file")
+
+	status = http.StatusNotFound
+	_, err = Load(contents)
+	require.Error(t, err)
+	assert.NotErrorIs(t, err, ErrParentUnavailable, "a 404 means the reference is broken")
 }
