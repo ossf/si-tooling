@@ -174,10 +174,10 @@ type VulnerabilityReporting struct {
 	PGPKey *URL `json:"pgp-key,omitempty"`
 
 	// A list of issues or components that are covered by the vulnerability reporting process.
-	InScope *URL `json:"in-scope,omitempty"`
+	InScope []string `json:"in-scope,omitempty"`
 
 	// A list of issues or components not covered by the vulnerability reporting process.
-	OutOfScope *URL `json:"out-of-scope,omitempty"`
+	OutOfScope []string `json:"out-of-scope,omitempty"`
 }
 
 // Project describes the overall project, including basic info, documentation links, repositories, vulnerability reporting, and security details.

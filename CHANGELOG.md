@@ -12,6 +12,20 @@ This release expands on the Security Insights v2.1.0 specification by adding a n
 - `si.Load` returns `si.ErrParentUnavailable` when the parent named in `project-si-source` cannot be fetched for a reason unrelated to its content; `si fetch` reports that as `error`, not `invalid`
 - All GitHub API calls, including the existing `si.Read`, now authenticate with `GITHUB_TOKEN` when set and honour `GITHUB_API_URL`; all requests time out after 30 seconds
 
+## v2.2.1
+
+### Features
+
+- `SecurityInsightsFilenames()` returns both accepted names, `security-insights.yml` and `security-insights.yaml`, matching the spec
+
+### Deprecations
+
+- `SecurityInsightsFilename` names only the `.yml` file. Use `SecurityInsightsFilenames()` instead
+
+### Bug Fixes
+
+- `in-scope` and `out-of-scope` load as string lists. Files that set either field no longer fail to load ([#68](https://github.com/ossf/si-tooling/issues/68))
+
 ## v2.1.0
 
 This release is made in concert with the v2.1.0 release of [Security Insights](https://github.com/ossf/security-insights-spec)

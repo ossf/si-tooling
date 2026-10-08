@@ -45,6 +45,11 @@ func TestDiscover(t *testing.T) {
 			want: ".github/security-insights.yml",
 		},
 		{
+			name: "spec .yaml spelling",
+			dirs: map[string][]string{"": {"security-insights.yaml"}},
+			want: "security-insights.yaml",
+		},
+		{
 			name: "no .github directory",
 			dirs: map[string][]string{"": {"README.md"}},
 			err:  ErrNotFound,

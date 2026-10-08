@@ -127,6 +127,17 @@ func TestNewURL(t *testing.T) {
 		})
 	}
 }
+
+func TestSecurityInsightsFilenames(t *testing.T) {
+	assert.Equal(t, []string{"security-insights.yml", "security-insights.yaml"}, SecurityInsightsFilenames())
+
+	t.Run("returns a fresh slice", func(t *testing.T) {
+		names := SecurityInsightsFilenames()
+		names[0] = "changed"
+		assert.Equal(t, "security-insights.yml", SecurityInsightsFilenames()[0])
+	})
+}
+
 func TestNewEmail(t *testing.T) {
 	tests := []struct {
 		name     string
