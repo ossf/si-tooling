@@ -1,10 +1,15 @@
+# Project and repository template for a multi-repository project
+# This file would be stored in the https://example.com/foobar/foo repository
+# and addressable via https://example.com/foobar/foo/security-insights.yml
 header:
-  schema-version: 2.2.0
+  schema-version: 2.0.0
   last-updated: '2025-03-01'
-  last-reviewed: '2025-03-01'
-  url: https://example.com/kubernetes/kubernetes
+  last-reviewed: '2025-04-01'
+  url: https://example.com/foo/bar/raw/branch/main/security-insights.yml
   comment: |
-    Minimal v2.2.0 example with project.documentation.design and vulnerability-reporting.policy
+    This file contains the minimum information for both project and repository.
+    It not required to include both a project and repository section if the project
+    section is intended to be inherited by repositories via header.project-si-source
 
 project:
   name: FooBar
@@ -16,22 +21,19 @@ project:
       primary: true
   repositories:
     - name: Foo
-      url: https://vcs.example.com/foobar/foo
+      url: https://example.com/foobar/foo
       comment: |
         Foo is the core repo for FooBar.
-  steward:
-    uri: https://openssf.org
-    comment: |
-      The Security Insights Specification is a copyright of the Open Source Security Foundation (OpenSSF).
-  documentation:
-    design: https://example.com/design
+    - name: Bar
+      url: https://example.com/foobar/bar
+      comment: |
+        Bar is also part of the FooBar project.
   vulnerability-reporting:
     reports-accepted: true
     bug-bounty-available: true
-    policy: https://example.com/SECURITY.md
 
 repository:
-  url: https://vcs.example.com/foobar/foo
+  url: https://example.com/foobar/foo
   status: active
   accepts-change-request: true
   accepts-automated-change-request: true
