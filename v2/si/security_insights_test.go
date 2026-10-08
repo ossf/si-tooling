@@ -98,6 +98,8 @@ func TestLoadV220Fields(t *testing.T) {
 	require.NotNil(t, &si.Project.VulnerabilityReporting)
 	assert.NotNil(t, si.Project.VulnerabilityReporting.Policy, "vulnerability-reporting.policy should be set")
 	assert.Equal(t, "https://example.com/SECURITY.md", si.Project.VulnerabilityReporting.Policy.String())
+	assert.Equal(t, []string{"remote code execution in the server"}, si.Project.VulnerabilityReporting.InScope)
+	assert.Equal(t, []string{"denial of service"}, si.Project.VulnerabilityReporting.OutOfScope)
 }
 
 func TestNewURL(t *testing.T) {

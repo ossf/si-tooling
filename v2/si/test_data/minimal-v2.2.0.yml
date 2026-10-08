@@ -4,7 +4,7 @@ header:
   last-reviewed: '2025-03-01'
   url: https://example.com/kubernetes/kubernetes
   comment: |
-    Minimal v2.2.0 example with project.documentation.design and vulnerability-reporting.policy
+    Minimal v2.2.0 example with project.documentation.design, vulnerability-reporting.policy, in-scope, and out-of-scope
 
 project:
   name: FooBar
@@ -29,6 +29,10 @@ project:
     reports-accepted: true
     bug-bounty-available: true
     policy: https://example.com/SECURITY.md
+    in-scope:
+      - remote code execution in the server
+    out-of-scope:
+      - denial of service
 
 repository:
   url: https://vcs.example.com/foobar/foo
