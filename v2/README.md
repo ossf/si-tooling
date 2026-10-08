@@ -19,6 +19,64 @@ func main() {
 }
 ```
 
+### Discovering the file
+
+Repositories keep the file under a handful of names and locations. `si.Discover` lists the root and `.github/` directories (at most two API calls) and returns the first known filename it finds; `si.Fetch` returns the raw bytes of a known path.
+
+```go
+ctx := context.Background()
+path, err := si.Discover(ctx, "ossf", "scorecard")   // ".github/security-insights.yml"
+raw, err := si.Fetch(ctx, "ossf", "scorecard", path)
+insights, err := si.Load(raw)
+```
+
+Set `GITHUB_TOKEN` to authenticate GitHub API calls (unauthenticated requests are limited to 60 per hour). `GITHUB_API_URL`, which GitHub Actions exports, is honoured for GitHub Enterprise. Both apply to `si.Read` as well. Requests time out after 30 seconds.
+
+## Command line
+
+`si fetch` runs discovery and parsing over any number of targets and prints a JSON array, in input order, for other tools to consume:
+
+```sh
+cd v2
+go run ./cmd/si fetch ossf/scorecard mindersec/minder \
+  https://github.com/openbao/openbao/blob/main/.github/security-insights.yml
+```
+
+Targets may be `owner/repo` (discover the path), `owner/repo/<path>`, a `github.com/.../blob/...` URL, or a `raw.githubusercontent.com` URL. URLs are read from the default branch; the ref in the URL is ignored and must be a single path segment.
+
+Each result looks like:
+
+```json
+{
+  "target": "ossf/scorecard",
+  "owner": "ossf",
+  "repo": "scorecard",
+  "path": ".github/security-insights.yml",
+  "status": "ok",
+  "schema-version": "2.0.0",
+  "insights": { "header": { ... }, "project": { ... }, "repository": { ... } }
+}
+```
+
+`status` is one of:
+
+| status | meaning |
+|---|---|
+| `ok` | the file was fetched and parsed; `insights` is populated |
+| `not-found` | no file at the path, or discovery found nothing |
+| `invalid` | the file exists but does not parse as Security Insights v2 (`error` says why; `schema-version` is still reported when the header declares one), or the target string is malformed |
+| `error` | the file, or the parent it names in `project-si-source`, could not be fetched (rate limit, server error, network, bad token); nothing is known about it |
+
+The full array is always printed. Exit codes:
+
+| exit | when |
+|---|---|
+| 0 | every target was processed; statuses are `ok`, `not-found` or `invalid` |
+| 1 | the JSON could not be written |
+| 2 | usage error, or at least one target has status `error`, so the output is incomplete and should not be committed as a snapshot |
+
+Progress is written to stderr.
+
 ## Schema version support
 
 The module supports Security Insights schema version 2.x, including v2.2.0:

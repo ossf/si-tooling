@@ -2,14 +2,15 @@ package si
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-yaml"
-	"github.com/google/go-github/v71/github"
 )
 
 // SecurityInsightsFilename is the expected name of the YAML file containing the insights data. See https://github.com/ossf/security-insights-spec?tab=readme-ov-file#usage for more details.
@@ -24,44 +25,40 @@ func SecurityInsightsFilenames() []string {
 	return []string{SecurityInsightsFilename, "security-insights.yaml"}
 }
 
-func fetchParentSecurityInsights(parentUrl string) (bytes []byte, err error) {
-	request, err := http.NewRequest("GET", parentUrl, nil)
-	if err != nil {
-		return
-	}
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		err = fmt.Errorf("error making http call: %s", err.Error())
-		return
-	}
-	if response.StatusCode != http.StatusOK {
-		err = fmt.Errorf("unexpected response: %s", response.Status)
-		return
-	}
-	return io.ReadAll(response.Body)
-}
+// ErrParentUnavailable is returned by Load when the parent file named in
+// header.project-si-source could not be fetched for a reason that says nothing
+// about either file: a network failure, or any HTTP status other than 200 and
+// 404. A 404 means the reference itself is broken and is reported as an
+// ordinary error.
+var ErrParentUnavailable = errors.New("parent security insights unavailable")
 
-func getGitHubSourceFile(owner, repo, path string) ([]byte, error) {
-	client := github.NewClient(http.DefaultClient)
-	content, _, _, err := client.Repositories.GetContents(context.Background(), owner, repo, path, nil)
+// httpClient is shared by every request the package makes.
+// ponytail: fixed 30s timeout; export a setter if a caller needs to tune it.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
+func fetchParentSecurityInsights(parentUrl string) ([]byte, error) {
+	response, err := httpClient.Get(parentUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrParentUnavailable, err)
 	}
-	s, err := content.GetContent()
-	if err != nil {
-		return nil, err
+	defer func() { _ = response.Body.Close() }()
+	switch response.StatusCode {
+	case http.StatusOK:
+		return io.ReadAll(response.Body)
+	case http.StatusNotFound:
+		return nil, fmt.Errorf("unexpected response: %s", response.Status)
+	default:
+		return nil, fmt.Errorf("%w: %s", ErrParentUnavailable, response.Status)
 	}
-	return []byte(s), nil
 }
 
 // Read reads a SecurityInsights YAML file from a public GitHub repository
 // and returns an error if the file cannot be found or unmarshalled or returns
 // a SecurityInsights resulting from the unmarshalling.
 func Read(owner, repo, path string) (si SecurityInsights, err error) {
-	response, err := getGitHubSourceFile(owner, repo, path)
+	response, err := Fetch(context.Background(), owner, repo, path)
 	if err != nil {
-		err = fmt.Errorf("error reading target SI: %s", err.Error())
+		err = fmt.Errorf("error reading target SI: %w", err)
 		return
 	}
 	insights, err := Load(response)
@@ -93,7 +90,7 @@ func Load(contents []byte) (si *SecurityInsights, err error) {
 		var raw []byte
 		raw, err = fetchParentSecurityInsights(insights.Header.ProjectSISource.String())
 		if err != nil {
-			err = fmt.Errorf("error reading parent SI: %s", err.Error())
+			err = fmt.Errorf("error reading parent SI: %w", err)
 			return
 		}
 		parent := &SecurityInsights{}
