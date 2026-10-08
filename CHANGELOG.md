@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.2.1
 
 ### Features
 
@@ -9,6 +9,10 @@
 ### Deprecations
 
 - `SecurityInsightsFilename` names only the `.yml` file. Use `SecurityInsightsFilenames()` instead
+
+### Bug Fixes
+
+- `in-scope` and `out-of-scope` load as string lists. Files that set either field no longer fail to load ([#68](https://github.com/ossf/si-tooling/issues/68))
 
 ## v2.1.0
 
