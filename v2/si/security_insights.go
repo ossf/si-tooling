@@ -13,7 +13,16 @@ import (
 )
 
 // SecurityInsightsFilename is the expected name of the YAML file containing the insights data. See https://github.com/ossf/security-insights-spec?tab=readme-ov-file#usage for more details.
+//
+// Deprecated: the spec accepts both .yml and .yaml. Use SecurityInsightsFilenames.
 const SecurityInsightsFilename = "security-insights.yml"
+
+// SecurityInsightsFilenames returns every name a SecurityInsights YAML file may
+// use. The historical .yml name comes first, so callers that stop at the first
+// match keep their current behavior. A project should keep only one of them.
+func SecurityInsightsFilenames() []string {
+	return []string{SecurityInsightsFilename, "security-insights.yaml"}
+}
 
 func fetchParentSecurityInsights(parentUrl string) (bytes []byte, err error) {
 	request, err := http.NewRequest("GET", parentUrl, nil)

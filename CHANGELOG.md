@@ -1,5 +1,19 @@
 # Changelog
 
+## v2.2.1
+
+### Features
+
+- `SecurityInsightsFilenames()` returns both accepted names, `security-insights.yml` and `security-insights.yaml`, matching the spec
+
+### Deprecations
+
+- `SecurityInsightsFilename` names only the `.yml` file. Use `SecurityInsightsFilenames()` instead
+
+### Bug Fixes
+
+- `in-scope` and `out-of-scope` load as string lists. Files that set either field no longer fail to load ([#68](https://github.com/ossf/si-tooling/issues/68))
+
 ## v2.1.0
 
 This release is made in concert with the v2.1.0 release of [Security Insights](https://github.com/ossf/security-insights-spec)
